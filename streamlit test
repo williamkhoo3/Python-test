@@ -1,0 +1,59 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import ipywidgets as widgets
+from IPython.display import display, clear_output
+
+# Define the data
+data = {
+    'Year': [2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033],
+    'Cashcow': [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
+    'QuestionMark': [-5, -7, -4, 0, 4, 15, 25, 40, 50, 55]
+}
+
+# Create a DataFrame
+df = pd.DataFrame(data)
+
+# Initial interest rate
+initial_interest_rate = 0.05
+
+# Interest rates corresponding to each year
+interest_rates = np.full(len(df), initial_interest_rate)
+
+# Create interactive widgets
+interest_rate_slider = widgets.FloatSlider(value=initial_interest_rate, min=0, max=0.2, step=0.01, description='Interest Rate:')
+output = widgets.Output()
+
+# Function to update the plot
+def update_plot(change):
+    new_interest_rate = interest_rate_slider.value
+    interest_rates[:] = new_interest_rate
+    
+    with output:
+        clear_output(wait=True)
+        plt.figure(figsize=(10, 6))
+        
+        for idx, year in enumerate(df['Year']):
+            cashcow_npv = df.loc[idx, 'Cashcow'] / (1 + interest_rates[idx]) ** (year - df['Year'].min())
+            questionmark_npv = df.loc[idx, 'QuestionMark'] / (1 + interest_rates[idx]) ** (year - df['Year'].min())
+            plt.bar(year - 0.2, cashcow_npv, width=0.4, color='blue', alpha=0.7, label='CashCow NPV' if idx == 0 else None)
+            plt.bar(year + 0.2, questionmark_npv, width=0.4, color='green', alpha=0.7, label='QuestionMark NPV' if idx == 0 else None)
+
+        plt.title('NPV: CashCow vs QuestionMark Over Years (With Changing Interest Rates)')
+        plt.xlabel('Year')
+        plt.ylabel('NPV')
+        plt.grid(True)
+        plt.xticks(df['Year'])  # Set x-axis ticks to be the years
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+# Attach the function to the slider
+interest_rate_slider.observe(update_plot, 'value')
+
+# Display widgets
+display(interest_rate_slider)
+display(output)
+
+# Initially update the plot
+update_plot(None)
